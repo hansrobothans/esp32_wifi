@@ -35,6 +35,8 @@
 #include "lwip/sys.h"
 
 
+//下方以及替换到menuconfig中，所以注释掉
+
 // #define SMARTCONFIG true	//是否开启smart配网
 
 //修改此处可以修改热点ap的帐号密码以及最大连接数（不可以超过4）无需多修改其它参数

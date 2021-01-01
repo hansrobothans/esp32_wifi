@@ -1,8 +1,12 @@
 #include "bsp_wifi.h"
+
 //wifi建立成功信号量
 EventGroupHandle_t bsp_wifi_event_group;
+
 //重新连接的次数
 static int wifi_retry_num = 0;
+
+
 /*
 * smart连接
 * @param[in]   void                :无
@@ -67,44 +71,16 @@ static void wifi_event_handler(void* arg, esp_event_base_t event_base,
             ESP_LOGI(TAG_WIFI, "retry to connect to the AP");
         }
         ESP_LOGI(TAG_WIFI,"connect to the AP fail");
-    } 
-    //未解决代码
-    //STA模式-连接成功
-    // else if (event_base == WIFI_EVENT && event_id == SYSTEM_EVENT_STA_STACONNECTED)   
-    // {
-    //     wifi_event_ap_staconnected_t* event_sta_staconnected = (wifi_event_ap_staconnected_t*) event_data;
-    //     ESP_LOGI(TAG_WIFI, "connect "MACSTR" join, AID=%d",
-    //              MAC2STR(event_sta_staconnected->mac),
-    //                     event_sta_staconnected->aid);
-    //     xEventGroupSetBits(bsp_wifi_event_group, WIFI_CONNECTED_BIT);
-    // } 
-    
+    }     
     //STA模式-获取IP 
     else if (event_base == IP_EVENT && event_id == IP_EVENT_STA_GOT_IP)
     {
         ip_event_got_ip_t* event_ip = (ip_event_got_ip_t*) event_data;
-        ESP_LOGI(TAG_WIFI, "got ip:%s",
-                 ip4addr_ntoa(&event_ip->ip_info.ip));
+        // ESP_LOGI(TAG_WIFI, "got ip:%s",
+        //          ip4addr_ntoa(&event_ip->ip_info.ip));
+        ESP_LOGI(TAG_WIFI, "got ip:" IPSTR, IP2STR(&event_ip->ip_info.ip));
         wifi_retry_num = 0;
         xEventGroupSetBits(bsp_wifi_event_group, WIFI_CONNECTED_BIT);
-    }
-    //AP模式-有STA连接成功
-    else if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_AP_STACONNECTED)   
-    {
-        wifi_event_ap_staconnected_t* event_ap_staconnected = (wifi_event_ap_staconnected_t*) event_data;
-        ESP_LOGI(TAG_WIFI, "station "MACSTR" join, AID=%d",
-                 MAC2STR(event_ap_staconnected->mac),
-                        event_ap_staconnected->aid);
-        xEventGroupSetBits(bsp_wifi_event_group, WIFI_CONNECTED_BIT);
-    } 
-    //AP模式-有STA断线
-    else if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_AP_STADISCONNECTED) 
-    {
-        wifi_event_ap_stadisconnected_t* event_ap_stadisconnected = (wifi_event_ap_stadisconnected_t*) event_data;
-        ESP_LOGI(TAG_WIFI, "station "MACSTR" leave, AID=%d",
-                 MAC2STR(event_ap_stadisconnected->mac), 
-                        event_ap_stadisconnected->aid);
-        xEventGroupClearBits(bsp_wifi_event_group, WIFI_CONNECTED_BIT);
     }
     // smart配网
     else if (event_base == SC_EVENT && event_id == SC_EVENT_SCAN_DONE) 
@@ -143,6 +119,24 @@ static void wifi_event_handler(void* arg, esp_event_base_t event_base,
     } 
     else if (event_base == SC_EVENT && event_id == SC_EVENT_SEND_ACK_DONE) {
         xEventGroupSetBits(bsp_wifi_event_group, ESPTOUCH_DONE_BIT);
+    }
+    //AP模式-有STA连接成功
+    else if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_AP_STACONNECTED)   
+    {
+        wifi_event_ap_staconnected_t* event_ap_staconnected = (wifi_event_ap_staconnected_t*) event_data;
+        ESP_LOGI(TAG_WIFI, "station "MACSTR" join, AID=%d",
+                 MAC2STR(event_ap_staconnected->mac),
+                        event_ap_staconnected->aid);
+        xEventGroupSetBits(bsp_wifi_event_group, WIFI_CONNECTED_BIT);
+    } 
+    //AP模式-有STA断线
+    else if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_AP_STADISCONNECTED) 
+    {
+        wifi_event_ap_stadisconnected_t* event_ap_stadisconnected = (wifi_event_ap_stadisconnected_t*) event_data;
+        ESP_LOGI(TAG_WIFI, "station "MACSTR" leave, AID=%d",
+                 MAC2STR(event_ap_stadisconnected->mac), 
+                        event_ap_stadisconnected->aid);
+        xEventGroupClearBits(bsp_wifi_event_group, WIFI_CONNECTED_BIT);
     }
 }
 
@@ -191,6 +185,7 @@ void bsp_wifi_init_station(void)
     ESP_LOGI(TAG_WIFI, "connect to ap SSID:%s password:%s \n",
              CONFIG_BSP_ESP_STA_WIFI_SSID, CONFIG_BSP_ESP_STA_WIFI_PASSWORD);
 }
+
 /*
 * WIFI作为AP的初始化
 * @param[in]   void                :无
